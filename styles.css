@@ -108,6 +108,16 @@ textarea {
   background: linear-gradient(90deg, #bf5f33 0%, #173940 100%);
 }
 
+.toast-stack {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 20;
+  display: grid;
+  gap: 12px;
+  width: min(420px, calc(100% - 24px));
+}
+
 .page-shell {
   position: relative;
   z-index: 1;
@@ -764,14 +774,6 @@ textarea {
   color: rgba(255, 248, 237, 0.72);
 }
 
-.form-status {
-  margin: 0 0 18px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 248, 237, 0.12);
-  color: #fff8ee;
-}
-
 .contact-form {
   display: grid;
   gap: 14px;
@@ -803,6 +805,85 @@ textarea {
 .submit-button {
   justify-self: start;
   margin-top: 6px;
+}
+
+.submit-button.is-loading {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.toast {
+  position: relative;
+  overflow: hidden;
+  padding: 16px 18px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 248, 237, 0.12);
+  box-shadow: 0 28px 64px rgba(18, 37, 42, 0.24);
+  backdrop-filter: blur(18px);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast--success {
+  background: linear-gradient(135deg, rgba(16, 37, 42, 0.96), rgba(37, 83, 78, 0.94));
+  color: #f7f4ed;
+}
+
+.toast--error {
+  background: linear-gradient(135deg, rgba(109, 42, 35, 0.96), rgba(160, 68, 53, 0.94));
+  color: #fff4ef;
+}
+
+.toast-title {
+  margin: 0;
+  padding-right: 38px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.toast-copy {
+  margin: 8px 0 0;
+  padding-right: 38px;
+  color: rgba(255, 248, 237, 0.82);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.toast-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 248, 237, 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: rgba(255, 248, 237, 0.2);
+}
+
+.toast::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 248, 237, 0.32);
+  transform-origin: 0 50%;
+  animation: toast-timer 30s linear forwards;
 }
 
 .visually-hidden {
@@ -842,6 +923,15 @@ textarea {
   }
 }
 
+@keyframes toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @media (max-width: 1080px) {
   .metric-grid,
   .focus-grid,
@@ -865,6 +955,13 @@ textarea {
     width: min(100%, calc(100% - 16px));
     padding-top: 8px;
     padding-bottom: 40px;
+  }
+
+  .toast-stack {
+    right: 8px;
+    left: 8px;
+    bottom: 8px;
+    width: auto;
   }
 
   .hero,
@@ -926,6 +1023,7 @@ textarea {
   .ambient,
   .button,
   .language-button,
+  .toast,
   .reveal,
   .reveal-delay {
     animation: none;

@@ -7,20 +7,29 @@ const navLinks = document.querySelectorAll(".nav-link");
 const sections = document.querySelectorAll("main section[id], .contact-section[id]");
 const metricValues = document.querySelectorAll(".metric-value[data-count]");
 const hero = document.querySelector(".hero");
-const formNext = document.getElementById("form-next");
-const formStatus = document.getElementById("form-status");
+const contactForm = document.querySelector(".contact-form");
+const submitButton = contactForm ? contactForm.querySelector(".submit-button") : null;
+const toastStack = document.querySelector(".toast-stack");
 const metaDescription = document.querySelector('meta[name="description"]');
 
 const copy = {
   es: {
     title: "Alejandro Qui\u00f1ones Villar | IT Operations Lead",
     description: "Perfil profesional de Alejandro Qui\u00f1ones Villar, IT Operations Lead enfocado en liderazgo operativo, incident management y delivery internacional en banca y fintech.",
-    formSuccess: "Mensaje enviado. Si es el primer uso de FormSubmit, revisa el correo de activaci\u00f3n para completar la configuraci\u00f3n."
+    toastSuccessTitle: "Mensaje enviado correctamente",
+    toastSuccessBody: "Gracias por escribir. Si no recibes respuesta ahora, no hace falta reenviarlo.",
+    toastErrorTitle: "Ha habido un problema al enviar el mensaje",
+    toastErrorBody: "Intentalo de nuevo en un rato.",
+    toastClose: "Cerrar notificacion"
   },
   en: {
     title: "Alejandro Quinones Villar | IT Operations Lead",
     description: "Professional profile of Alejandro Quinones Villar, an IT Operations Lead focused on operational leadership, incident management, and international delivery in banking and fintech.",
-    formSuccess: "Message sent. If this is the first FormSubmit submission, check the activation email to complete setup."
+    toastSuccessTitle: "Message sent successfully",
+    toastSuccessBody: "Thanks for reaching out. If you do not get a response right away, there is no need to send it again.",
+    toastErrorTitle: "There was a problem sending the message",
+    toastErrorBody: "Please try again in a little while.",
+    toastClose: "Close notification"
   }
 };
 
@@ -54,9 +63,7 @@ function setLanguage(language) {
     renderMetricText(element, Number(element.dataset.count));
   });
 
-  if (formStatus && formStatus.dataset.state === "success") {
-    formStatus.textContent = copy[safeLanguage].formSuccess;
-  }
+  updateVisibleToasts();
 }
 
 function updateProgressBar() {
@@ -167,25 +174,144 @@ function setupHeroPointer() {
   });
 }
 
-function setupFormState() {
-  if (!formNext || !formStatus) {
+function toastContent(type) {
+  const language = body.dataset.lang || "es";
+
+  if (type === "error") {
+    return {
+      title: copy[language].toastErrorTitle,
+      body: copy[language].toastErrorBody
+    };
+  }
+
+  return {
+    title: copy[language].toastSuccessTitle,
+    body: copy[language].toastSuccessBody
+  };
+}
+
+function removeToast(toast) {
+  if (!toast || toast.dataset.closing === "true") {
     return;
   }
 
-  const nextUrl = new URL(window.location.href);
-  nextUrl.searchParams.set("sent", "1");
-  formNext.value = nextUrl.toString();
+  toast.dataset.closing = "true";
+  toast.classList.remove("is-visible");
+  window.setTimeout(() => {
+    toast.remove();
+  }, 220);
+}
 
-  const hasSent = new URLSearchParams(window.location.search).has("sent");
-  formStatus.dataset.state = hasSent ? "success" : "idle";
-  formStatus.hidden = !hasSent;
-  formStatus.textContent = hasSent ? copy[body.dataset.lang].formSuccess : "";
-
-  if (hasSent) {
-    const cleanUrl = new URL(window.location.href);
-    cleanUrl.searchParams.delete("sent");
-    window.history.replaceState({}, "", cleanUrl.toString());
+function updateVisibleToasts() {
+  if (!toastStack) {
+    return;
   }
+
+  toastStack.querySelectorAll(".toast").forEach((toast) => {
+    const content = toastContent(toast.dataset.type);
+    const title = toast.querySelector(".toast-title");
+    const bodyCopy = toast.querySelector(".toast-copy");
+    const closeButton = toast.querySelector(".toast-close");
+
+    if (title) {
+      title.textContent = content.title;
+    }
+
+    if (bodyCopy) {
+      bodyCopy.textContent = content.body;
+    }
+
+    if (closeButton) {
+      closeButton.setAttribute("aria-label", copy[body.dataset.lang || "es"].toastClose);
+    }
+  });
+}
+
+function showToast(type) {
+  if (!toastStack) {
+    return;
+  }
+
+  toastStack.querySelectorAll(".toast").forEach((toast) => removeToast(toast));
+
+  const content = toastContent(type);
+  const toast = document.createElement("section");
+  toast.className = `toast toast--${type}`;
+  toast.dataset.type = type;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+
+  const title = document.createElement("p");
+  title.className = "toast-title";
+  title.textContent = content.title;
+
+  const bodyCopy = document.createElement("p");
+  bodyCopy.className = "toast-copy";
+  bodyCopy.textContent = content.body;
+
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.className = "toast-close";
+  closeButton.setAttribute("aria-label", copy[body.dataset.lang || "es"].toastClose);
+  closeButton.textContent = "×";
+
+  closeButton.addEventListener("click", () => {
+    removeToast(toast);
+  });
+
+  toast.append(title, bodyCopy, closeButton);
+  toastStack.append(toast);
+
+  window.requestAnimationFrame(() => {
+    toast.classList.add("is-visible");
+  });
+
+  window.setTimeout(() => {
+    removeToast(toast);
+  }, 30000);
+}
+
+function setupContactForm() {
+  if (!contactForm || !submitButton) {
+    return;
+  }
+
+  contactForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    submitButton.disabled = true;
+    submitButton.classList.add("is-loading");
+    contactForm.setAttribute("aria-busy", "true");
+
+    try {
+      const response = await fetch(contactForm.action, {
+        method: "POST",
+        body: new FormData(contactForm),
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      let payload = null;
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        payload = await response.json();
+      }
+
+      if (!response.ok || (payload && (payload.success === false || payload.success === "false"))) {
+        throw new Error("form-submit-error");
+      }
+
+      contactForm.reset();
+      showToast("success");
+    } catch (error) {
+      showToast("error");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.classList.remove("is-loading");
+      contactForm.removeAttribute("aria-busy");
+    }
+  });
 }
 
 languageButtons.forEach((button) => {
@@ -199,7 +325,7 @@ setLanguage(savedLanguage);
 setupReveal();
 setupNavigationTracking();
 setupHeroPointer();
-setupFormState();
+setupContactForm();
 updateProgressBar();
 
 window.addEventListener("scroll", updateProgressBar, { passive: true });
