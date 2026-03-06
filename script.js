@@ -15,14 +15,12 @@ const copy = {
   es: {
     title: "Alejandro Qui\u00f1ones Villar | IT Operations Lead",
     description: "Perfil profesional de Alejandro Qui\u00f1ones Villar, IT Operations Lead enfocado en liderazgo operativo, incident management y delivery internacional en banca y fintech.",
-    formSuccess: "Mensaje enviado. Si es el primer uso de FormSubmit, revisa el correo de activaci\u00f3n para completar la configuraci\u00f3n.",
-    formPending: "El formulario est\u00e1 listo para enviar y es compatible con GitHub Pages."
+    formSuccess: "Mensaje enviado. Si es el primer uso de FormSubmit, revisa el correo de activaci\u00f3n para completar la configuraci\u00f3n."
   },
   en: {
     title: "Alejandro Quinones Villar | IT Operations Lead",
     description: "Professional profile of Alejandro Quinones Villar, an IT Operations Lead focused on operational leadership, incident management, and international delivery in banking and fintech.",
-    formSuccess: "Message sent. If this is the first FormSubmit submission, check the activation email to complete setup.",
-    formPending: "The contact form is ready to send and works on GitHub Pages."
+    formSuccess: "Message sent. If this is the first FormSubmit submission, check the activation email to complete setup."
   }
 };
 
@@ -56,10 +54,8 @@ function setLanguage(language) {
     renderMetricText(element, Number(element.dataset.count));
   });
 
-  if (formStatus && !formStatus.hidden) {
-    formStatus.textContent = formStatus.dataset.state === "success"
-      ? copy[safeLanguage].formSuccess
-      : copy[safeLanguage].formPending;
+  if (formStatus && formStatus.dataset.state === "success") {
+    formStatus.textContent = copy[safeLanguage].formSuccess;
   }
 }
 
@@ -181,9 +177,9 @@ function setupFormState() {
   formNext.value = nextUrl.toString();
 
   const hasSent = new URLSearchParams(window.location.search).has("sent");
-  formStatus.hidden = false;
-  formStatus.dataset.state = hasSent ? "success" : "pending";
-  formStatus.textContent = hasSent ? copy[body.dataset.lang].formSuccess : copy[body.dataset.lang].formPending;
+  formStatus.dataset.state = hasSent ? "success" : "idle";
+  formStatus.hidden = !hasSent;
+  formStatus.textContent = hasSent ? copy[body.dataset.lang].formSuccess : "";
 
   if (hasSent) {
     const cleanUrl = new URL(window.location.href);
