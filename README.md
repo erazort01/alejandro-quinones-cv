@@ -2,6 +2,8 @@
 
 Sitio web estatico para presentar el perfil profesional de Alejandro Quinones Villar.
 
+URL publica: `https://erazort01.github.io/alejandro-quinones-cv/`
+
 ## Publicarlo en GitHub Pages
 
 1. Sube estos archivos a un repositorio de GitHub.
